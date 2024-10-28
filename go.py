@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import streamlit as st
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.ensemble import RandomForestRegressor
@@ -54,7 +55,8 @@ models = {
 # Training e valutazione
 results = {}
 for name, model in models.items():
-    print(f"\nTraining {name}...")
+    #print(f"\nTraining {name}...")
+    st.write(f"\nTraining {name}...")
     # Training su tutti i numeri della sestina
     predictions = np.zeros_like(y_test)
     for i in range(6):
@@ -64,14 +66,14 @@ for name, model in models.items():
     # Calcolo accuracy considerando una predizione corretta se il numero è nell'intervallo ±2
     accuracy = np.mean([np.abs(predictions[j] - y_test[j]) <= 2 for j in range(len(y_test))])
     results[name] = accuracy
-    print(f"{name} Accuracy: {accuracy*100:.2f}%")
-
+    # print(f"{name} Accuracy: {accuracy*100:.2f}%")
+    st.write(f"{name} Accuracy: {accuracy*100:.2f}%")
 # Seleziono il modello migliore
 best_model_name = max(results, key=results.get)
 best_model = models[best_model_name]
 best_accuracy = results[best_model_name]
-print(f"\nMiglior modello: {best_model_name} con accuracy {best_accuracy*100:.2f}%")
-
+#print(f"\nMiglior modello: {best_model_name} con accuracy {best_accuracy*100:.2f}%")
+st.write(f"\nMiglior modello: {best_model_name} con accuracy {best_accuracy*100:.2f}%")
 # Funzione per generare nuove sestine valide
 def generate_valid_sestines(model, scaler, n_sestine=3, max_attempts=1000):
     valid_sestines = []
@@ -114,23 +116,28 @@ def generate_valid_sestines(model, scaler, n_sestine=3, max_attempts=1000):
                 all(1 <= x <= 90 for x in sestina) and 
                 all(sestina[i] < sestina[i+1] for i in range(5))):
                 valid_sestines.append(sestina)
-                print(f"Trovata sestina valida dopo {attempts} tentativi")
-        
+                #print(f"Trovata sestina valida dopo {attempts} tentativi")
+                st.write(f"Trovata sestina valida dopo {attempts} tentativi")
         except Exception as e:
-            print(f"Errore durante la generazione: {e}")
+            #print(f"Errore durante la generazione: {e}")
+            st.writ(f"Errore durante la generazione: {e}")
             continue
     
     if len(valid_sestines) < n_sestine:
-        print(f"\nATTENZIONE: Sono riuscito a generare solo {len(valid_sestines)} sestine valide su {n_sestine} richieste dopo {max_attempts} tentativi")
-    
+        #print(f"\nATTENZIONE: Sono riuscito a generare solo {len(valid_sestines)} sestine valide su {n_sestine} richieste dopo {max_attempts} tentativi")
+        st.write(f"\nATTENZIONE: Sono riuscito a generare solo {len(valid_sestines)} sestine valide su {n_sestine} richieste dopo {max_attempts} tentativi")
     return valid_sestines
 
 # Genero e visualizzo le nuove sestine
-print("\n=== SESTINE PREDETTE ===")
+#print("\n=== SESTINE PREDETTE ===")
+st.write("\n=== SESTINE PREDETTE ===")
 new_sestines = generate_valid_sestines(best_model, scaler)
 if new_sestines:  # Verifico che ci siano sestine generate
     for i, sestina in enumerate(new_sestines, 1):
-        print(f"Sestina {i}: {' - '.join(map(str, sestina))}")
+        #print(f"Sestina {i}: {' - '.join(map(str, sestina))}")
+        st.write(f"Sestina {i}: {' - '.join(map(str, sestina))}")
 else:
-    print("Non è stato possibile generare sestine valide")
-print("=====================")
+    #print("Non è stato possibile generare sestine valide")
+    st.write("Non è stato possibile generare sestine valide")
+#print("=====================")
+st.write("=====================")
