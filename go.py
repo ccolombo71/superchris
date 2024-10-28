@@ -9,12 +9,21 @@ from sklearn.tree import DecisionTreeRegressor
 from xgboost import XGBRegressor
 from sklearn.neural_network import MLPRegressor
 
-# Leggo il file Excel
-df = pd.read_excel('sestine.xlsx', header=None)
-df.columns = [f'num_{i+1}' for i in range(6)]
+# Leggo il file di testo con encoding specifico
+data = []
+with open('sestine.txt', 'r', encoding='utf-8-sig') as file:  # Changed this line
+    for line in file:
+        try:
+            # Converto ogni numero della sestina in intero
+            sestina = [int(num.strip()) for num in line.strip().split(',')]
+            if len(sestina) == 6:  # Verifico che la sestina sia completa
+                data.append(sestina)
+        except ValueError as e:
+            st.write(f"Skipping invalid line: {line.strip()} - Error: {e}")
 
-# Converto il DataFrame in array numpy per l'elaborazione
-data = df.values
+# Rest of your code remains the same
+# Converto in DataFrame
+df = pd.DataFrame(data, columns=[f'num_{i+1}' for i in range(6)])
 
 # Funzione per calcolare features aggiuntive
 def extract_features(sestina):
@@ -55,7 +64,6 @@ models = {
 # Training e valutazione
 results = {}
 for name, model in models.items():
-    #print(f"\nTraining {name}...")
     st.write(f"\nTraining {name}...")
     # Training su tutti i numeri della sestina
     predictions = np.zeros_like(y_test)
@@ -66,15 +74,14 @@ for name, model in models.items():
     # Calcolo accuracy considerando una predizione corretta se il numero è nell'intervallo ±2
     accuracy = np.mean([np.abs(predictions[j] - y_test[j]) <= 2 for j in range(len(y_test))])
     results[name] = accuracy
-    # print(f"{name} Accuracy: {accuracy*100:.2f}%")
     st.write(f"{name} Accuracy: {accuracy*100:.2f}%")
+
 # Seleziono il modello migliore
 best_model_name = max(results, key=results.get)
 best_model = models[best_model_name]
 best_accuracy = results[best_model_name]
-#print(f"\nMiglior modello: {best_model_name} con accuracy {best_accuracy*100:.2f}%")
 st.write(f"\nMiglior modello: {best_model_name} con accuracy {best_accuracy*100:.2f}%")
-# Funzione per generare nuove sestine valide
+
 def generate_valid_sestines(model, scaler, n_sestine=3, max_attempts=1000):
     valid_sestines = []
     attempts = 0
@@ -116,28 +123,23 @@ def generate_valid_sestines(model, scaler, n_sestine=3, max_attempts=1000):
                 all(1 <= x <= 90 for x in sestina) and 
                 all(sestina[i] < sestina[i+1] for i in range(5))):
                 valid_sestines.append(sestina)
-                #print(f"Trovata sestina valida dopo {attempts} tentativi")
                 st.write(f"Trovata sestina valida dopo {attempts} tentativi")
+        
         except Exception as e:
-            #print(f"Errore durante la generazione: {e}")
-            st.writ(f"Errore durante la generazione: {e}")
+            st.write(f"Errore durante la generazione: {e}")
             continue
     
     if len(valid_sestines) < n_sestine:
-        #print(f"\nATTENZIONE: Sono riuscito a generare solo {len(valid_sestines)} sestine valide su {n_sestine} richieste dopo {max_attempts} tentativi")
         st.write(f"\nATTENZIONE: Sono riuscito a generare solo {len(valid_sestines)} sestine valide su {n_sestine} richieste dopo {max_attempts} tentativi")
+    
     return valid_sestines
 
 # Genero e visualizzo le nuove sestine
-#print("\n=== SESTINE PREDETTE ===")
 st.write("\n=== SESTINE PREDETTE ===")
 new_sestines = generate_valid_sestines(best_model, scaler)
 if new_sestines:  # Verifico che ci siano sestine generate
     for i, sestina in enumerate(new_sestines, 1):
-        #print(f"Sestina {i}: {' - '.join(map(str, sestina))}")
         st.write(f"Sestina {i}: {' - '.join(map(str, sestina))}")
 else:
-    #print("Non è stato possibile generare sestine valide")
     st.write("Non è stato possibile generare sestine valide")
-#print("=====================")
 st.write("=====================")
